@@ -5,11 +5,36 @@
     <vendor>okafke</vendor>
 
     <depends>com.intellij.modules.platform</depends>
+    <depends>com.redhat.devtools.lsp4ij</depends>
 
     <resource-bundle>messages.MyBundle</resource-bundle>
 
     <extensions defaultExtensionNs="com.intellij">
+        <projectService serviceImplementation="com.github.okafke.poryscriptintellij.PsSettingsState"/>
+        <projectConfigurable instance="com.github.okafke.poryscriptintellij.PsConfigurable"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="com.intellij">
         <toolWindow factoryClass="com.github.okafke.poryscriptintellij.toolWindow.MyToolWindowFactory" id="MyToolWindow"/>
         <postStartupActivity implementation="com.github.okafke.poryscriptintellij.startup.MyProjectActivity" />
+    </extensions>
+
+    <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
+        <server id="poryscript"
+                name="Poryscript"
+                factoryClass="com.github.okafke.poryscriptintellij.PsLanguageServerFactory">
+            <description><![CDATA[
+        A Language Server for poryscript.
+        ]]>
+            </description>
+        </server>
+    </extensions>
+
+    <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
+
+        <fileNamePatternMapping patterns="*.pory"
+                                serverId="poryscript"
+                                languageId="poryscript"/>
+
     </extensions>
 </idea-plugin>

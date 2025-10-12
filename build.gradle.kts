@@ -27,6 +27,10 @@ repositories {
     intellijPlatform {
         defaultRepositories()
     }
+
+    maven {
+        url = uri("https://repository.jboss.org/")
+    }
 }
 
 // Dependencies are managed with Gradle version catalog - read more: https://docs.gradle.org/current/userguide/platforms.html#sub:version-catalog
@@ -48,6 +52,13 @@ dependencies {
         bundledModules(providers.gradleProperty("platformBundledModules").map { it.split(',') })
 
         testFramework(TestFrameworkType.Platform)
+
+        //plugin("com.redhat.devtools.lsp4ij:0.17.0")
+    }
+
+    implementation("com.redhat.devtools.intellij:com.redhat.devtools.lsp4ij:0.17.0")
+    implementation("com.redhat.microprofile:com.redhat.qute.ls:0.17.0") {
+        exclude("org.eclipse.lsp4j")
     }
 }
 
