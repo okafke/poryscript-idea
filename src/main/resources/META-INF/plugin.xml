@@ -6,16 +6,19 @@
 
     <depends>com.intellij.modules.platform</depends>
     <depends>com.redhat.devtools.lsp4ij</depends>
+    <depends>org.jetbrains.plugins.textmate</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <projectService serviceImplementation="com.github.okafke.poryscriptidea.PsSettingsState"/>
         <projectConfigurable instance="com.github.okafke.poryscriptidea.PsConfigurable"/>
 
+        <textmate.bundleProvider implementation="com.github.okafke.poryscriptidea.textmate.PsTextMateBundleProvider" />
+
         <fileType
                 name="Poryscript"
                 implementationClass="com.github.okafke.poryscriptidea.lang.PsFileType"
                 fieldName="INSTANCE"
-                language="Poryscript"
+                language="textmate"
                 extensions="pory"/>
     </extensions>
 
@@ -28,10 +31,11 @@
         ]]>
             </description>
         </server>
-    </extensions>
 
-    <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
-        <languageMapping language="Poryscript"
+        <fileTypeMapping fileType="Poryscript"
                          serverId="poryscript" />
+
+        <fileNamePatternMapping patterns="*.pory;*.inc"
+                                serverId="poryscript" />
     </extensions>
 </idea-plugin>

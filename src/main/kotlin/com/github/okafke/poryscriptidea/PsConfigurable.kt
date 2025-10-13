@@ -1,11 +1,13 @@
 package com.github.okafke.poryscriptidea
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
+import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.NamedConfigurable
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
+import com.redhat.devtools.lsp4ij.LanguageServersRegistry
 import javax.swing.JComponent
 import javax.swing.JPanel
 

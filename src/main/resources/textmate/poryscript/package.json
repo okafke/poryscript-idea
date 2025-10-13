@@ -1,0 +1,62 @@
+{
+  "name": "poryscript",
+  "displayName": "Poryscript",
+  "description": "Syntax highlighting for Poryscript script language",
+  "version": "3.1.1",
+  "publisher": "okafke",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/okafke/poryscript-idea"
+  },
+  "icon": "images/icon.png",
+  "engines": {
+    "vscode": "^1.44.0"
+  },
+  "contributes": {
+    "languages": [
+      {
+        "id": "poryscript",
+        "aliases": [
+          "Poryscript",
+          "poryscript"
+        ],
+        "extensions": [
+          ".pory"
+        ],
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "poryscript-asm",
+        "aliases": [
+          "Poryasm",
+          "poryasm"
+        ],
+        "filenames": [
+          "text.inc",
+          "scripts.inc"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "poryscript",
+        "scopeName": "source.pory",
+        "path": "./syntaxes/poryscript.tmLanguage.json",
+        "embeddedLanguages": {
+          "source.arm": "arm"
+        }
+      },
+      {
+        "language": "poryscript-asm",
+        "scopeName": "source.pory.asm",
+        "path": "./syntaxes/poryscript-asm.tmLanguage.json",
+        "embeddedLanguages": {
+          "source.arm": "arm",
+          "source.pory": "poryscript"
+        }
+      }
+    ]
+  }
+}
