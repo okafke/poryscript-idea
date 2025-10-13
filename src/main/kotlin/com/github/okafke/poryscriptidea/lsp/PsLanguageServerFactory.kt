@@ -1,4 +1,4 @@
-package com.github.okafke.poryscriptintellij
+package com.github.okafke.poryscriptidea.lsp
 
 import com.intellij.openapi.project.Project
 import com.redhat.devtools.lsp4ij.LanguageServerFactory

@@ -1,17 +1,20 @@
-package com.github.okafke.poryscriptintellij
+package com.github.okafke.poryscriptidea.lsp
 
+import com.google.gson.Gson
+import com.google.gson.JsonObject
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isFile
 import com.redhat.devtools.lsp4ij.client.IndexAwareLanguageClient
-import org.eclipse.lsp4j.jsonrpc.services.JsonRequest
-import java.io.File
+import java.io.InputStreamReader
+import java.net.URI
 import java.nio.charset.StandardCharsets
+import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
+import kotlin.io.path.readBytes
 
 /**
 client.onRequest("poryscript/readfile", file => {
@@ -43,6 +46,14 @@ class PsLanguageClient(private val project: Project) : IndexAwareLanguageClient(
         return project.baseDir ?: project.basePath?.let { LocalFileSystem.getInstance().findFileByPath(it) }
     }
 
+    override fun createSettings(): Any {
+        val resourceStream = javaClass.classLoader.getResourceAsStream("poryscript-config.json")
+            ?: throw IllegalStateException("Resource 'poryscript-config.json' not found in classpath")
+        return InputStreamReader(resourceStream).use { reader ->
+            return Gson().fromJson(reader, JsonObject::class.java)
+        }
+    }
+
     override fun readfile(file: String): CompletableFuture<String> {
         return CompletableFuture.supplyAsync {
             runReadAction {
@@ -61,21 +72,9 @@ class PsLanguageClient(private val project: Project) : IndexAwareLanguageClient(
     override fun readfs(file: String): CompletableFuture<String> {
         return CompletableFuture.supplyAsync {
             runReadAction {
-                val absoluteFile = File(file)
-                val vfile = if (absoluteFile.isAbsolute) {
-                    LocalFileSystem.getInstance().findFileByIoFile(absoluteFile)
-                } else {
-                    getWorkspaceRoot()?.findFileByRelativePath(file)
-                }
-
-                project.thisLogger().warn("Read files: $file $vfile")
-                if (vfile != null && vfile.exists()) {
-                    val bytes = vfile.contentsToByteArray()
-                    String(bytes, StandardCharsets.UTF_8)
-                } else {
-                    project.thisLogger().warn("File null or empty: $vfile")
-                    ""
-                }
+                Paths.get(URI.create(file))
+                    .readBytes()
+                    .toString(StandardCharsets.UTF_8)
             }
         }
     }

@@ -1,11 +1,9 @@
-package com.github.okafke.poryscriptintellij
+package com.github.okafke.poryscriptidea
 
-import com.intellij.openapi.application.Application
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.project.Project
-import io.ktor.http.ContentType
 
 @State(name = "PsSettingsState", storages = [Storage("poryscript.xml")])
 class PsSettingsState : PersistentStateComponent<PsSettingsState> {

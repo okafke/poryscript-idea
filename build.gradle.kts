@@ -52,8 +52,6 @@ dependencies {
         bundledModules(providers.gradleProperty("platformBundledModules").map { it.split(',') })
 
         testFramework(TestFrameworkType.Platform)
-
-        //plugin("com.redhat.devtools.lsp4ij:0.17.0")
     }
 
     implementation("com.redhat.devtools.intellij:com.redhat.devtools.lsp4ij:0.17.0")

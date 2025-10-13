@@ -1,4 +1,4 @@
-package com.github.okafke.poryscriptintellij
+package com.github.okafke.poryscriptidea
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.project.Project
@@ -25,7 +25,7 @@ class PsConfigurable(private val project: Project) : NamedConfigurable<PsSetting
 
     override fun getDisplayName(): String = "Poryscript"
 
-    override fun setDisplayName(p0: @NlsSafe String) {
+    override fun setDisplayName(name: @NlsSafe String) {
 
     }
 

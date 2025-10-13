@@ -1,4 +1,4 @@
-package com.github.okafke.poryscriptintellij
+package com.github.okafke.poryscriptidea.lsp
 
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest
 import org.eclipse.lsp4j.services.LanguageClient
