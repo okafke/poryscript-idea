@@ -12,14 +12,15 @@
         <projectService serviceImplementation="com.github.okafke.poryscriptidea.PsSettingsState"/>
         <projectConfigurable instance="com.github.okafke.poryscriptidea.PsConfigurable"/>
 
-        <textmate.bundleProvider implementation="com.github.okafke.poryscriptidea.textmate.PsTextMateBundleProvider" />
-
+        <textmate.bundleProvider implementation="com.github.okafke.poryscriptidea.textmate.PsTextMateBundleProvider"/>
         <fileType
                 name="Poryscript"
                 implementationClass="com.github.okafke.poryscriptidea.lang.PsFileType"
                 fieldName="INSTANCE"
-                language="textmate"
+                language="poryscript"
                 extensions="pory"/>
+
+        <spellchecker.support language="poryscript" implementationClass="com.github.okafke.poryscriptidea.lang.PsSpellCheckingStrategy"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
@@ -31,6 +32,9 @@
         ]]>
             </description>
         </server>
+
+        <languageMapping language="poryscript"
+                         serverId="poryscript" />
 
         <fileTypeMapping fileType="Poryscript"
                          serverId="poryscript" />
