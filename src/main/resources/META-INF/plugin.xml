@@ -8,6 +8,11 @@
     <depends>com.redhat.devtools.lsp4ij</depends>
     <depends>org.jetbrains.plugins.textmate</depends>
 
+    <projectListeners>
+        <listener class="com.github.okafke.poryscriptidea.lang.PsInspectionListener"
+                  topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
+    </projectListeners>
+
     <extensions defaultExtensionNs="com.intellij">
         <projectService serviceImplementation="com.github.okafke.poryscriptidea.PsSettingsState"/>
         <projectConfigurable instance="com.github.okafke.poryscriptidea.PsConfigurable"/>
@@ -20,7 +25,14 @@
                 language="poryscript"
                 extensions="pory"/>
 
-        <spellchecker.support language="poryscript" implementationClass="com.github.okafke.poryscriptidea.lang.PsSpellCheckingStrategy"/>
+        <postStartupActivity implementation="com.github.okafke.poryscriptidea.lang.PsLanguageSpellcheckerStartup"/>
+        <spellchecker.support
+                language="poryscript"
+                implementationClass="com.github.okafke.poryscriptidea.lang.PsSpellcheckingStrategy"/>
+
+        <spellchecker.support
+                language="textmate"
+                implementationClass="com.github.okafke.poryscriptidea.lang.PsSpellcheckingStrategy"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
