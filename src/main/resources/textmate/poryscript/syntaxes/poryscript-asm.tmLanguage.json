@@ -1,35 +1,34 @@
 {
-    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
-    "name": "Poryscript-asm",
-    "patterns": [
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Poryscript-asm",
+  "patterns": [
+    {
+      "include": "#string"
+    },
+    {
+      "include": "source.arm"
+    }
+  ],
+  "repository": {
+    "string": {
+      "name": "string.quoted.double.pory",
+      "begin": "(?<=.string )\"",
+      "end": "\"",
+      "patterns": [
         {
-            "include": "#string"
+          "name": "constant.character.escape.pory.asm",
+          "match": "\\\\."
         },
         {
-            "include": "source.arm"
+          "name": "constant.character.escape.pory.asm",
+          "match": "{[\\w ]+}"
+        },
+        {
+          "name": "constant.character.escape.pory.asm",
+          "match": "\\$"
         }
-    ],
-    "repository": {
-
-        "string": {
-            "name": "string.quoted.double.pory",
-            "begin": "(?<=.string )\"",
-            "end": "\"",
-            "patterns": [
-                {
-                    "name": "constant.character.escape.pory.asm",
-                    "match": "\\\\."
-                },
-                {
-                    "name": "constant.character.escape.pory.asm",
-                    "match": "{[\\w ]+}"
-                },
-                {
-                    "name": "constant.character.escape.pory.asm",
-                    "match": "\\$"
-                }
-            ]
-        }
-    },
-    "scopeName": "source.pory.asm"
+      ]
+    }
+  },
+  "scopeName": "source.pory.asm"
 }

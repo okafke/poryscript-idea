@@ -8,9 +8,13 @@ import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
 
-
-class PsTextMateBundleProvider: TextMateBundleProvider {
+/**
+ * Provides the poryscript TextMate bundle inside our resources.
+ */
+class PsTextMateBundleProvider : TextMateBundleProvider {
     override fun getBundles(): List<PluginBundle> {
+        // TODO: this runs on every IDE start, we should cache this somewhere?!
+        //  e.g. inside some directory tied to our plugin?
         try {
             val bundleTempDir = Files.createTempDirectory(Path.of(PathManager.getTempPath()), "textmate-poryscript")
             for (fileToCopy in listOf(

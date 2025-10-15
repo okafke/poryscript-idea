@@ -4,7 +4,11 @@ import org.eclipse.lsp4j.jsonrpc.services.JsonRequest
 import org.eclipse.lsp4j.services.LanguageClient
 import java.util.concurrent.CompletableFuture
 
-interface PsLanguageClientApi: LanguageClient {
+/**
+ * The poryscript language server defines four custom JSON requests
+ * that need to be handled by the client.
+ */
+interface PsLanguageClientApi : LanguageClient {
     @JsonRequest("poryscript/readfile")
     fun readfile(file: String): CompletableFuture<String>
 

@@ -17,30 +17,9 @@ import java.util.concurrent.CompletableFuture
 import kotlin.io.path.readBytes
 
 /**
-client.onRequest("poryscript/readfile", file => {
-            let openPath = path.join(workspace.workspaceFolders[0].uri.fsPath, file);
-            if (fs.existsSync(openPath)) {
-                let uri = Uri.file(openPath);
-                return workspace.openTextDocument(uri).then(doc => doc.getText());
-            }
-            return "";
-        });
-        client.onRequest("poryscript/readfs", file => {
-            let openPath = Uri.parse(file).fsPath;
-            if (fs.existsSync(openPath)) {
-                let uri = Uri.file(openPath);
-                return workspace.openTextDocument(uri).then(doc => doc.getText());
-            }
-        });
-        client.onRequest("poryscript/getPoryscriptFiles", async () => {
-            let folder = workspace.workspaceFolders[0];
-            return await (await workspace.findFiles("**
-/*.{pory}", null, 1024)).map(uri => uri.path);
-});
-client.onRequest("poryscript/getfileuri", file => {
-    return url.pathToFileURL(path.join(workspace.workspaceFolders[0].uri.fsPath, file)).toString();
-});
- */*/
+ * Implementations of the [PsLanguageClientApi].
+ * Provides the server with the `poryscript-config.json`.
+ */
 class PsLanguageClient(private val project: Project) : IndexAwareLanguageClient(project), PsLanguageClientApi {
     private fun getWorkspaceRoot(): VirtualFile? {
         return project.baseDir ?: project.basePath?.let { LocalFileSystem.getInstance().findFileByPath(it) }
@@ -50,9 +29,11 @@ class PsLanguageClient(private val project: Project) : IndexAwareLanguageClient(
         val resourceStream = javaClass.classLoader.getResourceAsStream("poryscript-config.json")
             ?: throw IllegalStateException("Resource 'poryscript-config.json' not found in classpath")
         return InputStreamReader(resourceStream).use { reader ->
-            return Gson().fromJson(reader, JsonObject::class.java)
+            Gson().fromJson(reader, JsonObject::class.java)
         }
     }
+
+    // TODO: cleanup dirty ports of the VS Code implementations of the Json Requests
 
     override fun readfile(file: String): CompletableFuture<String> {
         return CompletableFuture.supplyAsync {
@@ -82,15 +63,15 @@ class PsLanguageClient(private val project: Project) : IndexAwareLanguageClient(
     override fun getPoryscriptFiles(): CompletableFuture<List<String>> {
         return CompletableFuture.supplyAsync {
             runReadAction {
-                val root = getWorkspaceRoot()
-                if (root == null) return@runReadAction emptyList()
+                val root = getWorkspaceRoot() ?: return@runReadAction emptyList()
                 val result = mutableListOf<String>()
                 VfsUtilCore.iterateChildrenRecursively(root, null) { vfile ->
-                    if (vfile.isFile && vfile.extension == "pory") {
-                        result.add(vfile.path) // or vfile.url/uri if you need
+                    if (vfile.isFile && vfile.extension.equals("pory", ignoreCase = true)) {
+                        result.add(vfile.path)
                     }
                     true
                 }
+
                 result
             }
         }

@@ -1,17 +1,12 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
     <id>com.github.okafke.poryscriptidea</id>
-    <name>poryscript-idea</name>
+    <name>Poryscript IDEA</name>
     <vendor>okafke</vendor>
 
     <depends>com.intellij.modules.platform</depends>
     <depends>com.redhat.devtools.lsp4ij</depends>
     <depends>org.jetbrains.plugins.textmate</depends>
-
-    <projectListeners>
-        <listener class="com.github.okafke.poryscriptidea.lang.PsInspectionListener"
-                  topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
-    </projectListeners>
 
     <extensions defaultExtensionNs="com.intellij">
         <projectService serviceImplementation="com.github.okafke.poryscriptidea.PsSettingsState"/>
@@ -45,13 +40,17 @@
             </description>
         </server>
 
+        <semanticTokensColorsProvider
+                serverId="poryscript"
+                class="com.github.okafke.poryscriptidea.lsp.PsSemanticTokenColorsProvider"/>
+
         <languageMapping language="poryscript"
-                         serverId="poryscript" />
+                         serverId="poryscript"/>
 
         <fileTypeMapping fileType="Poryscript"
-                         serverId="poryscript" />
+                         serverId="poryscript"/>
 
         <fileNamePatternMapping patterns="*.pory;*.inc"
-                                serverId="poryscript" />
+                                serverId="poryscript"/>
     </extensions>
 </idea-plugin>
