@@ -9,7 +9,6 @@
     <depends>org.jetbrains.plugins.textmate</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <projectService serviceImplementation="com.github.okafke.poryscriptidea.PsSettingsState"/>
         <projectConfigurable instance="com.github.okafke.poryscriptidea.PsConfigurable"/>
 
         <textmate.bundleProvider implementation="com.github.okafke.poryscriptidea.textmate.PsTextMateBundleProvider"/>

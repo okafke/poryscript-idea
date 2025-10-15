@@ -1,6 +1,8 @@
 package com.github.okafke.poryscriptidea
 
+import com.intellij.application.options.editor.fonts.AppFontConfigurable
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.SimplePersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.project.Project
