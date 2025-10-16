@@ -10,7 +10,7 @@ import java.util.concurrent.CompletableFuture
  */
 interface PsLanguageClientApi : LanguageClient {
     @JsonRequest("poryscript/readfile")
-    fun readfile(file: String): CompletableFuture<String>
+    fun readfile(relativePath: String): CompletableFuture<String>
 
     @JsonRequest("poryscript/readfs")
     fun readfs(file: String): CompletableFuture<String>
@@ -19,6 +19,6 @@ interface PsLanguageClientApi : LanguageClient {
     fun getPoryscriptFiles(): CompletableFuture<List<String>>
 
     @JsonRequest("poryscript/getfileuri")
-    fun getFileUri(file: String): CompletableFuture<String>
+    fun getFileUri(relativePath: String): CompletableFuture<String>
 
 }

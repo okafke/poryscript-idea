@@ -3,12 +3,14 @@ package com.github.okafke.poryscriptidea.lsp
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.project.BaseProjectDirectories.Companion.getBaseDirectories
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isFile
+import com.intellij.openapi.vfs.readBytes
 import com.redhat.devtools.lsp4ij.client.IndexAwareLanguageClient
+import okio.IOException
 import java.io.InputStreamReader
 import java.net.URI
 import java.nio.charset.StandardCharsets
@@ -21,8 +23,8 @@ import kotlin.io.path.readBytes
  * Provides the server with the `poryscript-config.json`.
  */
 class PsLanguageClient(private val project: Project) : IndexAwareLanguageClient(project), PsLanguageClientApi {
-    private fun getWorkspaceRoot(): VirtualFile? {
-        return project.baseDir ?: project.basePath?.let { LocalFileSystem.getInstance().findFileByPath(it) }
+    private fun getWorkspaceRoot(): VirtualFile {
+        return project.getBaseDirectories().stream().findFirst().orElseThrow { IOException("Project ${project.name} had no base directory!") }
     }
 
     override fun createSettings(): Any {
@@ -33,19 +35,15 @@ class PsLanguageClient(private val project: Project) : IndexAwareLanguageClient(
         }
     }
 
-    // TODO: cleanup dirty ports of the VS Code implementations of the Json Requests
-
-    override fun readfile(file: String): CompletableFuture<String> {
+    override fun readfile(relativePath: String): CompletableFuture<String> {
         return CompletableFuture.supplyAsync {
             runReadAction {
-                val root = getWorkspaceRoot()
-                val vfile = root?.findFileByRelativePath(file)
-                if (vfile != null && vfile.exists()) {
-                    val bytes = vfile.contentsToByteArray()
-                    String(bytes, StandardCharsets.UTF_8)
-                } else {
-                    ""
+                val file = getWorkspaceRoot().findFileByRelativePath(relativePath)
+                if (file == null || !file.exists()) {
+                    throw IOException("Failed to find file $relativePath in project ${project.name}")
                 }
+
+                String(file.readBytes(), StandardCharsets.UTF_8)
             }
         }
     }
@@ -63,11 +61,10 @@ class PsLanguageClient(private val project: Project) : IndexAwareLanguageClient(
     override fun getPoryscriptFiles(): CompletableFuture<List<String>> {
         return CompletableFuture.supplyAsync {
             runReadAction {
-                val root = getWorkspaceRoot() ?: return@runReadAction emptyList()
                 val result = mutableListOf<String>()
-                VfsUtilCore.iterateChildrenRecursively(root, null) { vfile ->
-                    if (vfile.isFile && vfile.extension.equals("pory", ignoreCase = true)) {
-                        result.add(vfile.path)
+                VfsUtilCore.iterateChildrenRecursively(getWorkspaceRoot(), null) { file ->
+                    if (file.isFile && file.extension.equals("pory", ignoreCase = true)) {
+                        result.add(file.path)
                     }
                     true
                 }
@@ -77,12 +74,11 @@ class PsLanguageClient(private val project: Project) : IndexAwareLanguageClient(
         }
     }
 
-    override fun getFileUri(file: String): CompletableFuture<String> {
+    override fun getFileUri(relativePath: String): CompletableFuture<String> {
         return CompletableFuture.supplyAsync {
             runReadAction {
-                val root = getWorkspaceRoot()
-                val vfile = root?.findFileByRelativePath(file)
-                vfile?.url ?: ""
+                getWorkspaceRoot().findFileByRelativePath(relativePath)?.url
+                    ?: throw IOException("Failed to to find relative path $relativePath in project ${project.name}")
             }
         }
     }
