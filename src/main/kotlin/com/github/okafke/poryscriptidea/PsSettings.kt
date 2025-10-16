@@ -1,10 +1,6 @@
 package com.github.okafke.poryscriptidea
 
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 
 @Service(Service.Level.PROJECT)
@@ -19,9 +15,7 @@ class PsSettings : PersistentStateComponent<PsSettings.State> {
             "asm/macros/movement.inc"
         ),
         var symbolIncludesJson: String = defaultSymbolIncludesJson(),
-        var commandConfigFilepath: String = "tools/poryscript/command_config.json",
-        var traceServer: String = "off",
-        var poryscriptPlsJson: String = "{}",
+        var commandConfigFilepath: String = "/tools/poryscript/command_config.json",
         var poryscriptPlsPath: String? = null
     )
 

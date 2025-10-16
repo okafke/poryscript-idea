@@ -1,19 +1,39 @@
 package com.github.okafke.poryscriptidea
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.ide.highlighter.HighlighterFactory
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.options.BoundSearchableConfigurable
+import com.intellij.openapi.project.BaseProjectDirectories.Companion.getBaseDirectories
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ComponentValidator
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiManager
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.dsl.builder.*
-import javax.swing.DefaultComboBoxModel
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.rows
+import java.awt.KeyboardFocusManager
+import java.awt.Point
+import java.awt.event.MouseEvent
+import java.nio.file.Files
+import java.nio.file.Path
+import javax.swing.text.JTextComponent
+import kotlin.io.path.extension
+import javax.swing.event.DocumentEvent as SwingDocumentEvent
+import javax.swing.event.DocumentListener as SwingDocumentListener
 
 class PsConfigurable(
     private val project: Project
@@ -27,80 +47,134 @@ class PsConfigurable(
     private var commandIncludesString = settings.commandIncludes.joinToString("\n")
     private var symbolIncludesJson = settings.symbolIncludesJson
     private var commandConfigFilepath = settings.commandConfigFilepath
-    private var traceServer = settings.traceServer
-    private var poryscriptPlsJson = settings.poryscriptPlsJson
     private var poryscriptPlsPath = settings.poryscriptPlsPath
 
     private var symbolIncludesEditor: EditorEx? = null
     private var poryscriptPlsEditor: EditorEx? = null
 
-    override fun createPanel(): DialogPanel =
-        panel {
+    private lateinit var dialogPanel: DialogPanel
+
+    override fun createPanel(): DialogPanel {
+        dialogPanel = panel {
             group("Poryscript Settings") {
-                row("Command Includes") {
-                    textArea()
-                        .bindText(
-                            { commandIncludesString },
-                            { commandIncludesString = it }
-                        )
-                        .comment("Macro Files that should be read and handled by the IntelliSense of the language server. One path per line.")
-                        .rows(4)
+                row("Server Binary") {
+                    val serverBinaryDescriptor = FileChooserDescriptorFactory.singleFile()
+                        .withTitle("Select Poryscript Server Binary")
+                        .withDescription("Select the optional poryscript-pls binary. This field may be left empty.")
+                        .withFileFilter { true }
+
+                    val tfwb = textFieldWithBrowseButton(serverBinaryDescriptor, project) { file: VirtualFile -> file.path }
                         .align(AlignX.FILL)
+                        .comment("Optional. Uses the poryscript-pls binary at the specified path if provided.")
+                        .component
+
+                    tfwb.text = poryscriptPlsPath.orEmpty()
+                    tfwb.textField.onSwingTextChanged {
+                        val value = it.ifBlank { null }
+                        if (poryscriptPlsPath != value) {
+                            poryscriptPlsPath = value
+                            dialogPanel.apply()
+                        }
+                    }
                 }
 
-                row("Symbol Includes (JSON array)") {
-                    cell(createJsonEditor(symbolIncludesJson) { text -> symbolIncludesJson = text }.withScrollPane())
-                        .align(AlignX.FILL)
-                        .resizableColumn()
-                        .comment("Files that are read as specified by `expression` to read additional symbol definitions.")
-                }
-
+                // ugh this is pretty ugly
+                // what we want to achieve is a text field with a browse files button
+                // that makes the text relative to the project base dir,
+                // because it seems like the poryscript-pls takes the file relative from the project baseDir.
                 row("Command Config") {
-                    textField()
-                        .bindText(
-                            { commandConfigFilepath },
-                            { commandConfigFilepath = it }
-                        )
-                        .comment("The filepath for Poryscript's command config file (command_config.json).")
-                        .align(AlignX.FILL)
+                    val baseDirs = project.getBaseDirectories().stream().toList()
+                    val baseDirPaths = baseDirs.map { it.path }
+
+                    val commandConfigDescriptor = FileChooserDescriptorFactory.singleFile()
+                        .withRoots(baseDirs)
+                        .withHideIgnored(true)
+                        .withShowFileSystemRoots(false)
+                        .withTitle("Select Command Config File")
+                        .withDescription("Select or enter the path to command_config.json within your project.")
+
+                    val tfwb = textFieldWithBrowseButton(commandConfigDescriptor, project) { file ->
+                        val baseDir = project.basePath ?: return@textFieldWithBrowseButton file.path
+                        val relative = try {
+                            Path.of(baseDir).relativize(Path.of(file.path)).toString()
+                        } catch (_: Exception) {
+                            file.path
+                        }
+                        relative
+                    }.align(AlignX.FILL)
+                        .comment("The filepath for Poryscript's command config file (command_config.json). This is the file that defines the available autovar commands.")
+                        .component
+
+                    tfwb.text = project.basePath?.let { base ->
+                        Path.of(base).relativize(Path.of(commandConfigFilepath)).toString()
+                    } ?: commandConfigFilepath
+
+                    tfwb.textField.onSwingTextChanged { relPath ->
+                        val absPath = project.basePath?.let { base ->
+                            if (relPath.isBlank()) "" else Path.of(base, relPath).normalize().toString()
+                        } ?: ""
+                        if (commandConfigFilepath != absPath) {
+                            commandConfigFilepath = absPath
+                            dialogPanel.apply()
+                        }
+                    }
+
+                    ComponentValidator(this@PsConfigurable.disposable ?: Disposer.newDisposable("PsConfigurable-ComponentValidator"))
+                        .installOn(tfwb.textField)
+                        .andRegisterOnDocumentListener(tfwb.textField)
+                        .withValidator {
+                            val relPath = tfwb.text.trim()
+                            if (relPath.isBlank()) return@withValidator null
+
+                            val absPath = project.basePath?.let { base -> Path.of(base, relPath).normalize() }
+                            if (absPath == null || !Files.exists(absPath)) {
+                                ValidationInfo("The selected file does not exist.", tfwb.textField)
+                            } else if (!absPath.extension.equals("json", ignoreCase = true)) {
+                                ValidationInfo("Please select a .json file.", tfwb.textField)
+                            } else if (baseDirPaths.none { absPath.startsWith(it) }) {
+                                ValidationInfo("The file must be inside the project base directory.", tfwb.textField)
+                            } else null
+                        }
                 }
 
-                row("Trace Server Output") {
-                    comboBox(
-                        DefaultComboBoxModel(arrayOf("off", "messages", "verbose"))
-                    ).bindItem(
-                        { traceServer },
-                        { traceServer = it ?: "off" }
-                    )
-                        .comment("Traces the communication between the IDE and the language server.")
+                row("Command Includes") {
+                    val area = textArea().rows(4).align(AlignX.FILL).component
+                    area.text = commandIncludesString
+                    area.onSwingTextChanged {
+                        if (commandIncludesString != it) {
+                            commandIncludesString = it
+                            dialogPanel.apply()
+                        }
+                    }
+
+                    comment("Macro files read by IntelliSense. One path per line.")
                 }
 
-                row("poryscript-pls Settings (JSON object)") {
-                    cell(createJsonEditor(poryscriptPlsJson) { text -> poryscriptPlsJson = text }.withScrollPane())
+                row("Symbol Includes") {
+                    cell(createJsonEditor(symbolIncludesJson) { text ->
+                        symbolIncludesJson = text
+                        dialogPanel.apply()
+                    }.withScrollPane())
                         .align(AlignX.FILL)
                         .resizableColumn()
-                        .comment("Settings passed down to poryscript-pls server (edit as JSON).")
-                }
-
-                row("poryscript-pls binary path (optional)") {
-                    textField()
-                        .bindText(
-                            { poryscriptPlsPath.orEmpty() },
-                            { poryscriptPlsPath = it.ifBlank { null } }
-                        )
-                        .comment("When specified, uses the poryscript-pls binary at a given path")
-                        .align(AlignX.FILL)
+                        .comment("JSON expressions defining additional symbol sources.")
                 }
             }
         }
+
+        // this ensures that the json syntax highlighting happens when the panel is displayed
+        invokeLater {
+            symbolIncludesEditor?.contentComponent?.requestFocusInWindow()
+        }
+
+        return dialogPanel
+    }
 
     override fun isModified(): Boolean {
         val s = settings
         return commandIncludesString.split('\n').map { it.trim() }.filter { it.isNotEmpty() } != s.commandIncludes ||
                 symbolIncludesJson.trim() != s.symbolIncludesJson.trim() ||
                 commandConfigFilepath != s.commandConfigFilepath ||
-                traceServer != s.traceServer ||
-                poryscriptPlsJson.trim() != s.poryscriptPlsJson.trim() ||
                 (poryscriptPlsPath?.trim() ?: "") != (s.poryscriptPlsPath?.trim() ?: "")
     }
 
@@ -109,8 +183,6 @@ class PsConfigurable(
         s.commandIncludes = commandIncludesString.split('\n').map { it.trim() }.filter { it.isNotEmpty() }
         s.symbolIncludesJson = symbolIncludesEditor?.document?.text ?: symbolIncludesJson
         s.commandConfigFilepath = commandConfigFilepath
-        s.traceServer = traceServer
-        s.poryscriptPlsJson = poryscriptPlsEditor?.document?.text ?: poryscriptPlsJson
         s.poryscriptPlsPath = poryscriptPlsPath?.trim().takeIf { !it.isNullOrBlank() }
     }
 
@@ -119,11 +191,8 @@ class PsConfigurable(
         commandIncludesString = s.commandIncludes.joinToString("\n")
         symbolIncludesJson = s.symbolIncludesJson
         commandConfigFilepath = s.commandConfigFilepath
-        traceServer = s.traceServer
-        poryscriptPlsJson = s.poryscriptPlsJson
         poryscriptPlsPath = s.poryscriptPlsPath
         symbolIncludesEditor?.let { runWriteAction { it.document.setText(symbolIncludesJson) } }
-        poryscriptPlsEditor?.let { runWriteAction { it.document.setText(poryscriptPlsJson) } }
     }
 
     override fun disposeUIResources() {
@@ -137,14 +206,12 @@ class PsConfigurable(
     private fun createJsonEditor(initialText: String, onTextChanged: (String) -> Unit): EditorEx {
         val fileType = FileTypeManager.getInstance().getFileTypeByExtension("json")
         val vFile = LightVirtualFile("PsConfigurable", fileType, initialText)
-
-        val document = FileDocumentManager.getInstance().getDocument(vFile) ?: EditorFactory.getInstance().createDocument(initialText)
+        val document = FileDocumentManager.getInstance().getDocument(vFile)
+            ?: EditorFactory.getInstance().createDocument(initialText)
         val editor = EditorFactory.getInstance().createEditor(document, project, fileType, false) as EditorEx
 
         val jsonFileType = FileTypeManager.getInstance().getFileTypeByExtension("json")
-        editor.highlighter = com.intellij.ide.highlighter.HighlighterFactory.createHighlighter(
-            project, jsonFileType
-        )
+        editor.highlighter = HighlighterFactory.createHighlighter(project, jsonFileType)
 
         with(editor.settings) {
             isWhitespacesShown = false
@@ -158,7 +225,7 @@ class PsConfigurable(
         }
         editor.isViewer = false
 
-        val documentListener = object : DocumentListener {
+        val listener = object : DocumentListener {
             override fun documentChanged(event: DocumentEvent) {
                 onTextChanged(document.text)
             }
@@ -166,13 +233,12 @@ class PsConfigurable(
 
         val disposable = this.disposable
         if (disposable == null) {
-            document.addDocumentListener(documentListener)
+            document.addDocumentListener(listener)
         } else {
-            document.addDocumentListener(documentListener, disposable)
+            document.addDocumentListener(listener, disposable)
         }
 
         if (initialText === symbolIncludesJson) symbolIncludesEditor = editor
-        if (initialText === poryscriptPlsJson) poryscriptPlsEditor = editor
 
         return editor
     }
@@ -183,5 +249,12 @@ class PsConfigurable(
         pane.minimumSize = java.awt.Dimension(0, 80)
         return pane
     }
+}
 
+fun JTextComponent.onSwingTextChanged(cb: (String) -> Unit) {
+    this.document.addDocumentListener(object : SwingDocumentListener {
+        override fun insertUpdate(e: SwingDocumentEvent?) = cb(this@onSwingTextChanged.text)
+        override fun removeUpdate(e: SwingDocumentEvent?) = cb(this@onSwingTextChanged.text)
+        override fun changedUpdate(e: SwingDocumentEvent?) = cb(this@onSwingTextChanged.text)
+    })
 }
