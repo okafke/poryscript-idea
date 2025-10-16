@@ -15,6 +15,7 @@ data class GithubAsset(
     @SerializedName("browser_download_url") val browserDownloadUrl: String
 )
 
+// TODO: this was just a quick dirty port from SBird1337/poryscript-language but we should take the best major release?
 fun getNewestRelease(majorVersion: String, releases: List<GithubRelease>): GithubRelease? {
     var found: GithubRelease? = null
     var bestMinor = -1

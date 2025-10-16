@@ -27,17 +27,12 @@ class PsSettings : PersistentStateComponent<PsSettings.State> {
     companion object {
         fun getInstance(project: Project): PsSettings = project.service<PsSettings>()
 
-        fun defaultSymbolIncludesJson(): String = """
-            [
-                {"expression": "^\\s*def_special\\s+(\\w+)", "type": "special", "file": "data/specials.inc"},
-                {"expression": "^\\s*#define\\s+(FLAG_\\w+)\\s+(.+)", "type": "define", "file": "include/constants/flags.h"},
-                {"expression": "^\\s*#define\\s+(VAR_\\w+)\\s+(.+)", "type": "define", "file": "include/constants/vars.h"},
-                {"expression": "^\\s*#define\\s+(ITEM_\\w+)\\s+(.+)", "type": "define", "file": "include/constants/items.h"},
-                {"expression": "^\\s*#define\\s+(SE_\\w+)\\s+(.+)", "type": "define", "file": "include/constants/songs.h"},
-                {"expression": "^\\s*#define\\s+(MUS_\\w+)\\s+(.+)", "type": "define", "file": "include/constants/songs.h"},
-                {"expression": "^\\s*#define\\s+(MAP_SCRIPT_\\w+)\\s+(.+)", "type": "define", "file": "include/constants/map_scripts.h"}
-            ]
-        """.trimIndent()
+        fun defaultSymbolIncludesJson(): String {
+            val inputStream = this::class.java.classLoader.getResourceAsStream("symbol-includes.json")
+                ?: throw IllegalStateException("Cannot find symbol-includes.json in resources!")
+
+            return inputStream.bufferedReader().readText()
+        }
     }
 
 }

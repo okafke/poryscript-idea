@@ -48,6 +48,7 @@ class PsLanguageServerInstaller() : ServerInstallerBase() {
 
     companion object {
         private const val GITHUB_API = "https://api.github.com/repos/huderlem/poryscript-pls/releases"
+        // TODO: this was just a quick dirty port from SBird1337/poryscript-language but we should take the best major release?
         private const val REQUESTED_MAJOR_VERSION = "1"
     }
 

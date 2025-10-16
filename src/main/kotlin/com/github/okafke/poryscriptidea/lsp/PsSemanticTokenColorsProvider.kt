@@ -20,7 +20,7 @@ class PsSemanticTokenColorsProvider : SemanticTokensColorsProvider {
         tokenModifiers: List<String>,
         file: PsiFile
     ): TextAttributesKey? {
-        // HighlightVisitorRunner
+        // runs from HighlightVisitorRunner
         // val key = defaultSemanticTokenColorsProvider.getTextAttributesKey(tokenType, tokenModifiers, file)
         return null
     }

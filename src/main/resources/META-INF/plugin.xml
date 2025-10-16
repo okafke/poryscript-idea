@@ -9,7 +9,11 @@
     <depends>org.jetbrains.plugins.textmate</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <projectConfigurable instance="com.github.okafke.poryscriptidea.PsConfigurable"/>
+        <projectConfigurable
+                parentId="tools"
+                instance="com.github.okafke.poryscriptidea.PsConfigurable"
+                displayName="Poryscript"
+                nonDefaultProject="true"/>
 
         <textmate.bundleProvider implementation="com.github.okafke.poryscriptidea.textmate.PsTextMateBundleProvider"/>
         <fileType

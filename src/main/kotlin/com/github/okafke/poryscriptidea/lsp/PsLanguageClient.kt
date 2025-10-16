@@ -1,17 +1,18 @@
 package com.github.okafke.poryscriptidea.lsp
 
-import com.google.gson.Gson
+import com.github.okafke.poryscriptidea.PsSettings
+import com.github.okafke.poryscriptidea.lsp.util.findRelativeFile
+import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.BaseProjectDirectories.Companion.getBaseDirectories
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isFile
 import com.intellij.openapi.vfs.readBytes
 import com.redhat.devtools.lsp4ij.client.IndexAwareLanguageClient
 import okio.IOException
-import java.io.InputStreamReader
 import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.nio.file.Paths
@@ -23,22 +24,30 @@ import kotlin.io.path.readBytes
  * Provides the server with the `poryscript-config.json`.
  */
 class PsLanguageClient(private val project: Project) : IndexAwareLanguageClient(project), PsLanguageClientApi {
-    private fun getWorkspaceRoot(): VirtualFile {
-        return project.getBaseDirectories().stream().findFirst().orElseThrow { IOException("Project ${project.name} had no base directory!") }
-    }
-
     override fun createSettings(): Any {
-        val resourceStream = javaClass.classLoader.getResourceAsStream("poryscript-config.json")
-            ?: throw IllegalStateException("Resource 'poryscript-config.json' not found in classpath")
-        return InputStreamReader(resourceStream).use { reader ->
-            Gson().fromJson(reader, JsonObject::class.java)
-        }
+        val settings = PsSettings.getInstance(project)
+        val result = JsonObject()
+
+        val languageServerPoryscript = JsonObject()
+
+        val commandIncludes = JsonArray()
+        settings.state.commandIncludes.forEach { commandIncludes.add(it) }
+        languageServerPoryscript.add("commandIncludes", commandIncludes)
+
+        val symbolIncludes = JsonParser.parseString(settings.state.symbolIncludesJson)
+        languageServerPoryscript.add("symbolIncludes", symbolIncludes)
+
+        languageServerPoryscript.addProperty("commandConfigFilepath", settings.state.commandConfigFilepath)
+
+        result.add("languageServerPoryscript", languageServerPoryscript)
+
+        return result
     }
 
     override fun readfile(relativePath: String): CompletableFuture<String> {
         return CompletableFuture.supplyAsync {
             runReadAction {
-                val file = getWorkspaceRoot().findFileByRelativePath(relativePath)
+                val file = findRelativeFile(project, relativePath)
                 if (file == null || !file.exists()) {
                     throw IOException("Failed to find file $relativePath in project ${project.name}")
                 }
@@ -62,11 +71,14 @@ class PsLanguageClient(private val project: Project) : IndexAwareLanguageClient(
         return CompletableFuture.supplyAsync {
             runReadAction {
                 val result = mutableListOf<String>()
-                VfsUtilCore.iterateChildrenRecursively(getWorkspaceRoot(), null) { file ->
-                    if (file.isFile && file.extension.equals("pory", ignoreCase = true)) {
-                        result.add(file.path)
+                for (baseDir in project.getBaseDirectories()) {
+                    VfsUtilCore.iterateChildrenRecursively(baseDir, null) { file ->
+                        if (file.isFile && file.extension.equals("pory", ignoreCase = true)) {
+                            result.add(file.path)
+                        }
+
+                        true
                     }
-                    true
                 }
 
                 result
@@ -77,7 +89,7 @@ class PsLanguageClient(private val project: Project) : IndexAwareLanguageClient(
     override fun getFileUri(relativePath: String): CompletableFuture<String> {
         return CompletableFuture.supplyAsync {
             runReadAction {
-                getWorkspaceRoot().findFileByRelativePath(relativePath)?.url
+                findRelativeFile(project, relativePath)?.url
                     ?: throw IOException("Failed to to find relative path $relativePath in project ${project.name}")
             }
         }

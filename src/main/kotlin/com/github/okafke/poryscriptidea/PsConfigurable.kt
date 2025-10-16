@@ -1,8 +1,15 @@
 package com.github.okafke.poryscriptidea
 
+import com.github.okafke.poryscriptidea.lsp.util.SymbolInclude
+import com.github.okafke.poryscriptidea.lsp.util.findRelativeFile
+import com.google.common.reflect.TypeToken
+import com.google.gson.Gson
+import com.google.gson.JsonParseException
+import com.intellij.execution.wsl.WslPath
 import com.intellij.ide.highlighter.HighlighterFactory
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -19,12 +26,18 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
+import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.rows
+import com.jetbrains.rd.generator.nova.Lang
+import com.redhat.devtools.lsp4ij.LanguageServerManager
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
+import java.util.function.Supplier
+import javax.swing.BorderFactory
 import javax.swing.text.JTextComponent
 import kotlin.io.path.extension
 import javax.swing.event.DocumentEvent as SwingDocumentEvent
@@ -78,62 +91,84 @@ class PsConfigurable(
                 // that makes the text relative to the project base dir,
                 // because it seems like the poryscript-pls takes the file relative from the project baseDir.
                 row("Command Config") {
-                    val baseDirs = project.getBaseDirectories().stream().toList()
-                    val baseDirPaths = baseDirs.map { it.path }
-
                     val commandConfigDescriptor = FileChooserDescriptorFactory.singleFile()
-                        .withRoots(baseDirs)
+                        .withRoots(project.getBaseDirectories().stream().toList())
                         .withHideIgnored(true)
-                        .withShowFileSystemRoots(false)
+                        .withShowFileSystemRoots(true)
                         .withTitle("Select Command Config File")
                         .withDescription("Select or enter the path to command_config.json within your project.")
 
-                    val tfwb = textFieldWithBrowseButton(commandConfigDescriptor, project) { file ->
-                        val baseDir = project.basePath ?: return@textFieldWithBrowseButton file.path
-                        val relative = try {
-                            Path.of(baseDir).relativize(Path.of(file.path)).toString()
-                        } catch (_: Exception) {
-                            file.path
+                    fun relativizePath(path: Path?): Path? {
+                        for (baseDir in project.getBaseDirectories()) {
+                            val baseDirPath = baseDir.fileSystem.getNioPath(baseDir)
+                            if (baseDirPath != null && path?.startsWith(baseDirPath) == true) {
+                                return baseDirPath.relativize(path)
+                            }
                         }
-                        relative
+
+                        return null
+                    }
+
+                    val tfwb = textFieldWithBrowseButton(commandConfigDescriptor, project) { file ->
+                        val filePath = file.fileSystem.getNioPath(file)?.toAbsolutePath()
+                        val path = relativizePath(filePath)
+                        if (path != null) {
+                            // if the file is in WSL then it might use windows file separators which is a problem
+                            // when the LanguageServer tries to read the file relative to the project root
+                            if (WslPath.isWslUncPath(filePath?.toAbsolutePath().toString())) {
+                                return@textFieldWithBrowseButton path.toString().replace("\\", "/")
+                            }
+
+                            return@textFieldWithBrowseButton path.toString()
+                        }
+
+                        thisLogger().error("Failed to relativize $file base paths: ${project.getBaseDirectories()}")
+                        return@textFieldWithBrowseButton file.path
                     }.align(AlignX.FILL)
                         .comment("The filepath for Poryscript's command config file (command_config.json). This is the file that defines the available autovar commands.")
                         .component
 
-                    tfwb.text = project.basePath?.let { base ->
-                        Path.of(base).relativize(Path.of(commandConfigFilepath)).toString()
-                    } ?: commandConfigFilepath
-
-                    tfwb.textField.onSwingTextChanged { relPath ->
-                        val absPath = project.basePath?.let { base ->
-                            if (relPath.isBlank()) "" else Path.of(base, relPath).normalize().toString()
-                        } ?: ""
-                        if (commandConfigFilepath != absPath) {
-                            commandConfigFilepath = absPath
+                    tfwb.text = commandConfigFilepath
+                    tfwb.textField.onSwingTextChanged {
+                        if (commandConfigFilepath != it) {
+                            commandConfigFilepath = it
                             dialogPanel.apply()
                         }
                     }
 
-                    ComponentValidator(this@PsConfigurable.disposable ?: Disposer.newDisposable("PsConfigurable-ComponentValidator"))
+                    val validator = ComponentValidator(this@PsConfigurable.disposable
+                            ?: Disposer.newDisposable("PsConfigurable-CommandConfig-ComponentValidator"))
                         .installOn(tfwb.textField)
                         .andRegisterOnDocumentListener(tfwb.textField)
                         .withValidator {
-                            val relPath = tfwb.text.trim()
-                            if (relPath.isBlank()) return@withValidator null
+                            val text = tfwb.text.trim()
+                            if (text.isBlank()) {
+                                return@withValidator ValidationInfo("Please provide a command_config.json file.", tfwb.textField)
+                            }
 
-                            val absPath = project.basePath?.let { base -> Path.of(base, relPath).normalize() }
-                            if (absPath == null || !Files.exists(absPath)) {
-                                ValidationInfo("The selected file does not exist.", tfwb.textField)
-                            } else if (!absPath.extension.equals("json", ignoreCase = true)) {
-                                ValidationInfo("Please select a .json file.", tfwb.textField)
-                            } else if (baseDirPaths.none { absPath.startsWith(it) }) {
-                                ValidationInfo("The file must be inside the project base directory.", tfwb.textField)
-                            } else null
+                            val file = findRelativeFile(project, text) ?: return@withValidator ValidationInfo(
+                                "The selected file does not exist or is not inside the project directory.",
+                                tfwb.textField
+                            )
+
+                            if (!file.extension.equals("json", ignoreCase = true)) {
+                                return@withValidator ValidationInfo("The file is not a json file.", tfwb.textField)
+                            }
+
+                            return@withValidator null
                         }
+
+                    invokeLater {
+                        validator.revalidate()
+                    }
                 }
 
                 row("Command Includes") {
-                    val area = textArea().rows(4).align(AlignX.FILL).component
+                    val area = textArea()
+                        .rows(4).align(AlignX.FILL)
+                        .comment("Macro files read by IntelliSense. One path per line.")
+                        .component
+
                     area.text = commandIncludesString
                     area.onSwingTextChanged {
                         if (commandIncludesString != it) {
@@ -141,18 +176,54 @@ class PsConfigurable(
                             dialogPanel.apply()
                         }
                     }
-
-                    comment("Macro files read by IntelliSense. One path per line.")
                 }
 
                 row("Symbol Includes") {
-                    cell(createJsonEditor(symbolIncludesJson) { text ->
+                    val editor = createJsonEditor(symbolIncludesJson) { text ->
                         symbolIncludesJson = text
                         dialogPanel.apply()
-                    }.withScrollPane())
+                    }
+
+                    val scroll = editor.withScrollPane()
+                    val cell = cell(scroll)
                         .align(AlignX.FILL)
                         .resizableColumn()
                         .comment("JSON expressions defining additional symbol sources.")
+
+                    val validator = object : Supplier<ValidationInfo?> {
+                        override fun get(): ValidationInfo? {
+                            val text = editor.document.text.trim()
+                            val symbolIncludeListType = object : TypeToken<List<SymbolInclude>>() {}.type
+                            try {
+                                Gson().fromJson<List<SymbolInclude>>(text, symbolIncludeListType)
+                                return null
+                            } catch (ex: JsonParseException) {
+                                return ValidationInfo(ex.localizedMessage, cell.component)
+                            }
+                        }
+                    }
+
+                    cell.component.border = BorderFactory.createEmptyBorder()
+                    val componentValidator = ComponentValidator(this@PsConfigurable.disposable
+                            ?: Disposer.newDisposable("PsConfigurable-SymbolIncludes-ComponentValidator"))
+                        .installOn(cell.component)
+                        .withValidator(validator)
+
+                    editor.document.addDocumentListener(object : DocumentListener {
+                        override fun documentChanged(event: DocumentEvent) {
+                            componentValidator.revalidate()
+                            if (validator.get() != null) {
+                                cell.component.border = BorderFactory.createLineBorder(JBColor.RED, 2)
+                            } else {
+                                cell.component.border = BorderFactory.createEmptyBorder()
+                            }
+                        }
+                    }, this@PsConfigurable.disposable
+                        ?: Disposer.newDisposable("PsConfigurable-SymbolIncludes-DocumentListener"))
+
+                    invokeLater {
+                        componentValidator.revalidate()
+                    }
                 }
             }
         }
@@ -179,6 +250,9 @@ class PsConfigurable(
         s.symbolIncludesJson = symbolIncludesEditor?.document?.text ?: symbolIncludesJson
         s.commandConfigFilepath = commandConfigFilepath
         s.poryscriptPlsPath = poryscriptPlsPath?.trim().takeIf { !it.isNullOrBlank() }
+
+        // restart server with new configuration
+        LanguageServerManager.getInstance(project).start("poryscript")
     }
 
     override fun reset() {
