@@ -3,6 +3,7 @@ package com.github.okafke.poryscriptidea.lsp
 import com.intellij.openapi.project.Project
 import com.redhat.devtools.lsp4ij.LanguageServerFactory
 import com.redhat.devtools.lsp4ij.client.LanguageClientImpl
+import com.redhat.devtools.lsp4ij.installation.ServerInstaller
 import com.redhat.devtools.lsp4ij.server.StreamConnectionProvider
 
 
@@ -13,6 +14,10 @@ class PsLanguageServerFactory : LanguageServerFactory {
 
     override fun createLanguageClient(project: Project): LanguageClientImpl {
         return PsLanguageClient(project)
+    }
+
+    override fun createServerInstaller(): ServerInstaller {
+        return PsLanguageServerInstaller()
     }
 
 }
