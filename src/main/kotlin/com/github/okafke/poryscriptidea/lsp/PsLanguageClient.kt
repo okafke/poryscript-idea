@@ -21,7 +21,7 @@ import kotlin.io.path.readBytes
 
 /**
  * Implementations of the [PsLanguageClientApi].
- * Provides the server with the `poryscript-config.json`.
+ * Also provides the server with the config defined by the settings.
  */
 class PsLanguageClient(private val project: Project) : IndexAwareLanguageClient(project), PsLanguageClientApi {
     override fun createSettings(): Any {
@@ -29,18 +29,14 @@ class PsLanguageClient(private val project: Project) : IndexAwareLanguageClient(
         val result = JsonObject()
 
         val languageServerPoryscript = JsonObject()
-
         val commandIncludes = JsonArray()
         settings.state.commandIncludes.forEach { commandIncludes.add(it) }
         languageServerPoryscript.add("commandIncludes", commandIncludes)
-
         val symbolIncludes = JsonParser.parseString(settings.state.symbolIncludesJson)
         languageServerPoryscript.add("symbolIncludes", symbolIncludes)
-
         languageServerPoryscript.addProperty("commandConfigFilepath", settings.state.commandConfigFilepath)
 
         result.add("languageServerPoryscript", languageServerPoryscript)
-
         return result
     }
 

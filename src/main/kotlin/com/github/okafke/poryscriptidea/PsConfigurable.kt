@@ -31,15 +31,11 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.rows
-import com.jetbrains.rd.generator.nova.Lang
 import com.redhat.devtools.lsp4ij.LanguageServerManager
-import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.function.Supplier
 import javax.swing.BorderFactory
 import javax.swing.text.JTextComponent
-import kotlin.io.path.extension
 import javax.swing.event.DocumentEvent as SwingDocumentEvent
 import javax.swing.event.DocumentListener as SwingDocumentListener
 
