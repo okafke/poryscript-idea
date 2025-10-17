@@ -1,46 +1,51 @@
-# poryscript-idea
+<!--suppress HtmlDeprecatedAttribute -->
+<h1 align="center" style="font-weight: normal;"><b>Poryscript-IDEA</b></h1>
+<p align="center">Poryscript plugin for Jetbrains IDEs.</p>
+<p align="center"><img src="src/main/resources/icon.png" alt="logo" style="width:200px;"></p>
+
+<div align="center">
 
 ![Build](https://github.com/okafke/poryscript-idea/workflows/Build/badge.svg)
+![GitHub](https://img.shields.io/github/license/okafke/poryscript-idea)
 [![Version](https://img.shields.io/jetbrains/plugin/v/MARKETPLACE_ID.svg)](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID)
 [![Downloads](https://img.shields.io/jetbrains/plugin/d/MARKETPLACE_ID.svg)](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID)
 
-## Template ToDo list
-
-- [x] Create a new [IntelliJ Platform Plugin Template][template] project.
-- [ ] Get familiar with the [template documentation][template].
-- [ ] Adjust the [pluginGroup](./gradle.properties) and [pluginName](./gradle.properties), as well as
-  the [id](./src/main/resources/META-INF/plugin.xml) and [sources package](./src/main/kotlin).
-- [ ] Adjust the plugin description in `README` (see [Tips][docs:plugin-description])
-- [ ] Review
-  the [Legal Agreements](https://plugins.jetbrains.com/docs/marketplace/legal-agreements.html?from=IJPluginTemplate).
-- [ ] [Publish a plugin manually](https://plugins.jetbrains.com/docs/intellij/publishing-plugin.html?from=IJPluginTemplate)
-  for the first time.
-- [ ] Set the `MARKETPLACE_ID` in the above README badges. You can obtain it once the plugin is published to JetBrains
-  Marketplace.
-- [ ] Set the [Plugin Signing](https://plugins.jetbrains.com/docs/intellij/plugin-signing.html?from=IJPluginTemplate)
-  related [secrets](https://github.com/JetBrains/intellij-platform-plugin-template#environment-variables).
-- [ ] Set
-  the [Deployment Token](https://plugins.jetbrains.com/docs/marketplace/plugin-upload.html?from=IJPluginTemplate).
-- [ ] Click the <kbd>Watch</kbd> button on the top of the [IntelliJ Platform Plugin Template][template] to be notified
-  about releases containing new features and fixes.
-- [ ] Configure the [CODECOV_TOKEN](https://docs.codecov.com/docs/quick-start) secret for automated test coverage
-  reports on PRs
+</div>
 
 <!-- Plugin description -->
-This Fancy IntelliJ Platform Plugin is going to be your implementation of the brilliant ideas that you have.
-
-This specific section is a source for the [plugin.xml](/src/main/resources/META-INF/plugin.xml) file which will be
-extracted by the [Gradle](/build.gradle.kts) during the build process.
-
-To keep everything working, do not remove `<!-- ... -->` sections.
+This plugin adds [Poryscript](https://github.com/huderlem/poryscript) support to Jetbrains IDEs
+like IntelliJ or CLion.
+It provides syntax highlighting via a TextMate bundle and runs the
+[Poryscript language server](https://github.com/huderlem/poryscript-pls)
+with the [LSP4IJ](https://github.com/redhat-developer/lsp4ij) plugin.
 <!-- Plugin description end -->
+This plugin is essentially a port of SBird1337's
+[VS code extension](https://github.com/SBird1337/poryscript-language).
+
+<p align="center"><img src="docs/code.png" alt="code"></p>
+
+## Configuration
+
+Poryscript-IDEA downloads the poryscript-pls language server binary for your platform
+from GitHub and runs it via the LSP4IJ plugin.
+You can configure the Language Server using the LSP4IJ tool window at the bottom of your IDE.
+Here you can e.g. trace the logs or trigger a reinstall of the language server.
+
+<p align="center"><img src="docs/lsp4ij.png" alt="lsp4ij"></p>
+
+Configuring the Language Server is done on a project level.
+The settings for Poryscript-IDEA can be found here:  
+<kbd>Settings</kbd> > <kbd>Languages & Frameworks</kbd> > <kbd>Poryscript</kbd>.  
+Here you can e.g. set a custom server binary or the command and symbol includes.
+
+<p align="center"><img src="docs/settings.png" alt="settings"></p>
 
 ## Installation
 
 - Using the IDE built-in plugin system:
 
-  <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>Marketplace</kbd> > <kbd>Search for "
-  poryscript-idea"</kbd> >
+  <kbd>Settings</kbd> > <kbd>Plugins</kbd> > <kbd>Marketplace</kbd> > <kbd>Search for "
+  Poryscript-IDEA"</kbd> >
   <kbd>Install</kbd>
 
 - Using JetBrains Marketplace:
@@ -50,12 +55,12 @@ To keep everything working, do not remove `<!-- ... -->` sections.
 
   You can also download the [latest release](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID/versions) from
   JetBrains Marketplace and install it manually using
-  <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>⚙️</kbd> > <kbd>Install plugin from disk...</kbd>
+  <kbd>Settings</kbd> > <kbd>Plugins</kbd> > <kbd>⚙️</kbd> > <kbd>Install plugin from disk...</kbd>
 
 - Manually:
 
   Download the [latest release](https://github.com/okafke/poryscript-idea/releases/latest) and install it manually using
-  <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>⚙️</kbd> > <kbd>Install plugin from disk...</kbd>
+  <kbd>Settings</kbd> > <kbd>Plugins</kbd> > <kbd>⚙️</kbd> > <kbd>Install plugin from disk...</kbd>
 
 ---
 Plugin based on the [IntelliJ Platform Plugin Template][template].
