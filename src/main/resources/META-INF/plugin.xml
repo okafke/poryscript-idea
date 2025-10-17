@@ -9,6 +9,9 @@
     <depends>org.jetbrains.plugins.textmate</depends>
 
     <extensions defaultExtensionNs="com.intellij">
+        <postStartupActivity implementation="com.github.okafke.poryscriptidea.lsp.RehighlightProjectActivity"/>
+        <highlightingPassFactory implementation="com.github.okafke.poryscriptidea.lsp.PsHighlightingFactory" order="last" />
+        <highlightVisitor implementation="com.github.okafke.poryscriptidea.lsp.PsHighlightVisitor" order="after LSPSemanticTokensHighlightVisitor" />
         <projectConfigurable
                 parentId="tools"
                 instance="com.github.okafke.poryscriptidea.PsConfigurable"
