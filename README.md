@@ -34,8 +34,8 @@ Here you can e.g. trace the logs or trigger a reinstall of the language server.
 <p align="center"><img src="docs/lsp4ij.png" alt="lsp4ij"></p>
 
 Configuring the Language Server is done on a project level.
-The settings for Poryscript-IDEA can be found here:  
-<kbd>Settings</kbd> > <kbd>Languages & Frameworks</kbd> > <kbd>Poryscript</kbd>.  
+The settings for Poryscript-IDEA can be found here: 
+<kbd>Settings</kbd> > <kbd>Languages & Frameworks</kbd> > <kbd>Poryscript</kbd>. 
 Here you can e.g. set a custom server binary or the command and symbol includes.
 
 <p align="center"><img src="docs/settings.png" alt="settings"></p>
@@ -54,12 +54,12 @@ Here you can e.g. set a custom server binary or the command and symbol includes.
   the <kbd>Install to ...</kbd> button in case your IDE is running.
 
   You can also download the [latest release](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID/versions) from
-  JetBrains Marketplace and install it manually using
+  JetBrains Marketplace and install it manually using  
   <kbd>Settings</kbd> > <kbd>Plugins</kbd> > <kbd>⚙️</kbd> > <kbd>Install plugin from disk...</kbd>
 
 - Manually:
 
-  Download the [latest release](https://github.com/okafke/poryscript-idea/releases/latest) and install it manually using
+  Download the [latest release](https://github.com/okafke/poryscript-idea/releases/latest) and install it manually using  
   <kbd>Settings</kbd> > <kbd>Plugins</kbd> > <kbd>⚙️</kbd> > <kbd>Install plugin from disk...</kbd>
 
 ---
