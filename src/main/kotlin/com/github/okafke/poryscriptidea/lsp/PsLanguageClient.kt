@@ -2,10 +2,12 @@ package com.github.okafke.poryscriptidea.lsp
 
 import com.github.okafke.poryscriptidea.PsSettings
 import com.github.okafke.poryscriptidea.lsp.util.findRelativeFile
+import com.github.okafke.poryscriptidea.lsp.util.relativizePath
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.BaseProjectDirectories.Companion.getBaseDirectories
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -48,7 +50,8 @@ class PsLanguageClient(private val project: Project) : IndexAwareLanguageClient(
                     throw IOException("Failed to find file $relativePath in project ${project.name}")
                 }
 
-                String(file.readBytes(), StandardCharsets.UTF_8)
+                val document = FileDocumentManager.getInstance().getDocument(file)
+                return@runReadAction document?.text ?: String(file.readBytes(), StandardCharsets.UTF_8)
             }
         }
     }
@@ -56,9 +59,19 @@ class PsLanguageClient(private val project: Project) : IndexAwareLanguageClient(
     override fun readfs(file: String): CompletableFuture<String> {
         return CompletableFuture.supplyAsync {
             runReadAction {
-                Paths.get(URI.create(file))
-                    .readBytes()
-                    .toString(StandardCharsets.UTF_8)
+                val path = Paths.get(URI.create(file))
+                val relativePath = relativizePath(project, path)
+                if (relativePath != null) {
+                    val file = findRelativeFile(project, relativePath.toString())
+                    if (file != null) {
+                        val document = FileDocumentManager.getInstance().getDocument(file)
+                        if (document != null) {
+                            return@runReadAction document.text
+                        }
+                    }
+                }
+
+                return@runReadAction path.readBytes().toString(StandardCharsets.UTF_8)
             }
         }
     }

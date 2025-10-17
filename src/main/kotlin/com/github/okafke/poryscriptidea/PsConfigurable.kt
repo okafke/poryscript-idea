@@ -2,6 +2,7 @@ package com.github.okafke.poryscriptidea
 
 import com.github.okafke.poryscriptidea.lsp.util.SymbolInclude
 import com.github.okafke.poryscriptidea.lsp.util.findRelativeFile
+import com.github.okafke.poryscriptidea.lsp.util.relativizePath
 import com.google.common.reflect.TypeToken
 import com.google.gson.Gson
 import com.google.gson.JsonParseException
@@ -29,10 +30,10 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.rows
 import com.redhat.devtools.lsp4ij.LanguageServerManager
-import java.nio.file.Path
 import java.util.function.Supplier
 import javax.swing.BorderFactory
 import javax.swing.text.JTextComponent
@@ -48,10 +49,12 @@ class PsConfigurable(
 ) {
     private val settings
         get() = PsSettings.getInstance(project).state
+
     private var commandIncludesString = settings.commandIncludes.joinToString("\n")
     private var symbolIncludesJson = settings.symbolIncludesJson
     private var commandConfigFilepath = settings.commandConfigFilepath
     private var poryscriptPlsPath = settings.poryscriptPlsPath
+    private var semanticTokenHighlighting = settings.semanticTokenHighlighting
 
     private var symbolIncludesEditor: EditorEx? = null
     private var poryscriptPlsEditor: EditorEx? = null
@@ -94,20 +97,9 @@ class PsConfigurable(
                         .withTitle("Select Command Config File")
                         .withDescription("Select or enter the path to command_config.json within your project.")
 
-                    fun relativizePath(path: Path?): Path? {
-                        for (baseDir in project.getBaseDirectories()) {
-                            val baseDirPath = baseDir.fileSystem.getNioPath(baseDir)
-                            if (baseDirPath != null && path?.startsWith(baseDirPath) == true) {
-                                return baseDirPath.relativize(path)
-                            }
-                        }
-
-                        return null
-                    }
-
                     val tfwb = textFieldWithBrowseButton(commandConfigDescriptor, project) { file ->
                         val filePath = file.fileSystem.getNioPath(file)?.toAbsolutePath()
-                        val path = relativizePath(filePath)
+                        val path = relativizePath(project, filePath)
                         if (path != null) {
                             // if the file is in WSL then it might use windows file separators which is a problem
                             // when the LanguageServer tries to read the file relative to the project root
@@ -221,12 +213,28 @@ class PsConfigurable(
                         componentValidator.revalidate()
                     }
                 }
+
+                row("Semantic Tokens") {
+                    cell(checkBox("")
+                            .bindSelected({ semanticTokenHighlighting }, { semanticTokenHighlighting = it })
+                            .onChanged {
+                                semanticTokenHighlighting = it.isSelected
+                                dialogPanel.apply()
+                            }.component)
+                        .comment("Enables/Disables Semantic token highlighting.")
+                }
             }
         }
 
         // this ensures that the json syntax highlighting happens when the panel is displayed
         invokeLater {
             symbolIncludesEditor?.contentComponent?.requestFocusInWindow()
+        }
+
+        // lose focus again
+        invokeLater {
+            symbolIncludesEditor?.contentComponent?.setFocusable(false)
+            symbolIncludesEditor?.contentComponent?.setFocusable(true)
         }
 
         return dialogPanel
@@ -237,7 +245,8 @@ class PsConfigurable(
         return commandIncludesString.split('\n').map { it.trim() }.filter { it.isNotEmpty() } != s.commandIncludes ||
                 symbolIncludesJson.trim() != s.symbolIncludesJson.trim() ||
                 commandConfigFilepath != s.commandConfigFilepath ||
-                (poryscriptPlsPath?.trim() ?: "") != (s.poryscriptPlsPath?.trim() ?: "")
+                (poryscriptPlsPath?.trim() ?: "") != (s.poryscriptPlsPath?.trim() ?: "") ||
+                semanticTokenHighlighting != s.semanticTokenHighlighting
     }
 
     override fun apply() {
@@ -246,6 +255,7 @@ class PsConfigurable(
         s.symbolIncludesJson = symbolIncludesEditor?.document?.text ?: symbolIncludesJson
         s.commandConfigFilepath = commandConfigFilepath
         s.poryscriptPlsPath = poryscriptPlsPath?.trim().takeIf { !it.isNullOrBlank() }
+        s.semanticTokenHighlighting = semanticTokenHighlighting
 
         // restart server with new configuration
         LanguageServerManager.getInstance(project).start("poryscript")
@@ -258,6 +268,7 @@ class PsConfigurable(
         commandConfigFilepath = s.commandConfigFilepath
         poryscriptPlsPath = s.poryscriptPlsPath
         symbolIncludesEditor?.let { runWriteAction { it.document.setText(symbolIncludesJson) } }
+        semanticTokenHighlighting = s.semanticTokenHighlighting
     }
 
     override fun disposeUIResources() {

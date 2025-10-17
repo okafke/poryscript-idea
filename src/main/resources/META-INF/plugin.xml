@@ -10,7 +10,7 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <projectConfigurable
-                parentId="tools"
+                parentId="language"
                 instance="com.github.okafke.poryscriptidea.PsConfigurable"
                 displayName="Poryscript"
                 nonDefaultProject="true"/>

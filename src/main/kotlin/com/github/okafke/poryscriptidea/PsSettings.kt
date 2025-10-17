@@ -16,13 +16,16 @@ class PsSettings : PersistentStateComponent<PsSettings.State> {
         ),
         var symbolIncludesJson: String = defaultSymbolIncludesJson(),
         var commandConfigFilepath: String = "/tools/poryscript/command_config.json",
-        var poryscriptPlsPath: String? = null
+        var poryscriptPlsPath: String? = null,
+        var semanticTokenHighlighting: Boolean = true,
     )
 
     private var state = State()
 
     override fun getState(): State = state
-    override fun loadState(newState: State) { state = newState }
+    override fun loadState(newState: State) {
+        state = newState
+    }
 
     companion object {
         fun getInstance(project: Project): PsSettings = project.service<PsSettings>()

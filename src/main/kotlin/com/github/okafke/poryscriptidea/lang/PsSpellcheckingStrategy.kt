@@ -13,10 +13,12 @@ import java.util.regex.Pattern
 /**
  * Since our language is TextMate based and we have not written any parsers
  * to parse poryscript into PsiElements all we get is the raw text of poryscript files.
+ * Intellij's Spellchecker marks keywords such as trainerbattle_single as spelling mistakes.
  * But we only want Spellchecking inside Strings and comments,
  * not inside code, so we need this custom [SpellcheckingStrategy].
  */
 class PsSpellcheckingStrategy : SpellcheckingStrategy() {
+    // TODO: we actually would like to have spell checking for function names too?
     override fun getTokenizer(element: PsiElement): Tokenizer<*> {
         if (element !is PsiFile) {
             thisLogger().warn("Unexpected element type: ${element.javaClass}")
