@@ -7,8 +7,8 @@
 
 ![Build](https://github.com/okafke/poryscript-idea/workflows/Build/badge.svg)
 ![GitHub](https://img.shields.io/github/license/okafke/poryscript-idea)
-[![Version](https://img.shields.io/jetbrains/plugin/v/MARKETPLACE_ID.svg)](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID)
-[![Downloads](https://img.shields.io/jetbrains/plugin/d/MARKETPLACE_ID.svg)](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID)
+[![Version](https://img.shields.io/jetbrains/plugin/v/28746-poryscript.svg)](https://plugins.jetbrains.com/plugin/28746-poryscript)
+[![Downloads](https://img.shields.io/jetbrains/plugin/d/28746-poryscript.svg)](https://plugins.jetbrains.com/plugin/28746-poryscript)
 
 </div>
 
@@ -50,10 +50,10 @@ Here you can e.g. set a custom server binary or the command and symbol includes.
 
 - Using JetBrains Marketplace:
 
-  Go to [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID) and install it by clicking
+  Go to [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/28746-poryscript) and install it by clicking
   the <kbd>Install to ...</kbd> button in case your IDE is running.
 
-  You can also download the [latest release](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID/versions) from
+  You can also download the [latest release](https://plugins.jetbrains.com/plugin/28746-poryscript/versions) from
   JetBrains Marketplace and install it manually using  
   <kbd>Settings</kbd> > <kbd>Plugins</kbd> > <kbd>⚙️</kbd> > <kbd>Install plugin from disk...</kbd>
 
