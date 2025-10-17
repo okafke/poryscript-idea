@@ -27,6 +27,10 @@ repositories {
     intellijPlatform {
         defaultRepositories()
     }
+
+    maven {
+        url = uri("https://repository.jboss.org/")
+    }
 }
 
 // Dependencies are managed with Gradle version catalog - read more: https://docs.gradle.org/current/userguide/platforms.html#sub:version-catalog
@@ -48,6 +52,11 @@ dependencies {
         bundledModules(providers.gradleProperty("platformBundledModules").map { it.split(',') })
 
         testFramework(TestFrameworkType.Platform)
+    }
+
+    implementation("com.redhat.devtools.intellij:com.redhat.devtools.lsp4ij:0.17.0")
+    implementation("com.redhat.microprofile:com.redhat.qute.ls:0.17.0") {
+        exclude("org.eclipse.lsp4j")
     }
 }
 
@@ -99,7 +108,8 @@ intellijPlatform {
         // The pluginVersion is based on the SemVer (https://semver.org) and supports pre-release labels, like 2.1.7-alpha.3
         // Specify pre-release label to publish the plugin in a custom Release Channel automatically. Read more:
         // https://plugins.jetbrains.com/docs/intellij/deployment.html#specifying-a-release-channel
-        channels = providers.gradleProperty("pluginVersion").map { listOf(it.substringAfter('-', "").substringBefore('.').ifEmpty { "default" }) }
+        channels = providers.gradleProperty("pluginVersion")
+            .map { listOf(it.substringAfter('-', "").substringBefore('.').ifEmpty { "default" }) }
     }
 
     pluginVerification {

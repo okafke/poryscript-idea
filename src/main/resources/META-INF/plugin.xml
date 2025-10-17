@@ -1,15 +1,59 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
-    <id>com.github.okafke.poryscriptintellij</id>
-    <name>poryscript-intellij</name>
+    <id>com.github.okafke.poryscriptidea</id>
+    <name>Poryscript-IDEA</name>
     <vendor>okafke</vendor>
 
     <depends>com.intellij.modules.platform</depends>
-
-    <resource-bundle>messages.MyBundle</resource-bundle>
+    <depends>com.redhat.devtools.lsp4ij</depends>
+    <depends>org.jetbrains.plugins.textmate</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <toolWindow factoryClass="com.github.okafke.poryscriptintellij.toolWindow.MyToolWindowFactory" id="MyToolWindow"/>
-        <postStartupActivity implementation="com.github.okafke.poryscriptintellij.startup.MyProjectActivity" />
+        <projectConfigurable
+                parentId="language"
+                instance="com.github.okafke.poryscriptidea.PsConfigurable"
+                displayName="Poryscript"
+                nonDefaultProject="true"/>
+
+        <textmate.bundleProvider implementation="com.github.okafke.poryscriptidea.textmate.PsTextMateBundleProvider"/>
+        <fileType
+                name="Poryscript"
+                implementationClass="com.github.okafke.poryscriptidea.lang.PsFileType"
+                fieldName="INSTANCE"
+                language="poryscript"
+                extensions="pory"/>
+
+        <postStartupActivity implementation="com.github.okafke.poryscriptidea.lang.PsLanguageSpellcheckerStartup"/>
+        <spellchecker.support
+                language="poryscript"
+                implementationClass="com.github.okafke.poryscriptidea.lang.PsSpellcheckingStrategy"/>
+
+        <spellchecker.support
+                language="textmate"
+                implementationClass="com.github.okafke.poryscriptidea.lang.PsSpellcheckingStrategy"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
+        <server id="poryscript"
+                name="Poryscript"
+                factoryClass="com.github.okafke.poryscriptidea.lsp.PsLanguageServerFactory">
+            <description><![CDATA[
+        A Language Server for poryscript.
+        ]]>
+            </description>
+        </server>
+
+        <semanticTokensColorsProvider
+                serverId="poryscript"
+                class="com.github.okafke.poryscriptidea.lsp.PsSemanticTokenColorsProvider"/>
+
+        <languageMapping language="poryscript"
+                         serverId="poryscript"/>
+
+        <fileTypeMapping fileType="Poryscript"
+                         serverId="poryscript"/>
+
+        <fileNamePatternMapping patterns="*.pory;*.inc"
+                                serverId="poryscript"/>
     </extensions>
 </idea-plugin>
