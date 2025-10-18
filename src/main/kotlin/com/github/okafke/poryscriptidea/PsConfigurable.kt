@@ -65,7 +65,7 @@ class PsConfigurable(
         dialogPanel = panel {
             group("Poryscript Settings") {
                 row("Server Binary") {
-                    val serverBinaryDescriptor = FileChooserDescriptorFactory.singleFile()
+                    val serverBinaryDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
                         .withTitle("Select Poryscript Server Binary")
                         .withDescription("Select the optional poryscript-pls binary. This field may be left empty.")
                         .withFileFilter { true }
@@ -90,7 +90,7 @@ class PsConfigurable(
                 // that makes the text relative to the project base dir,
                 // because it seems like the poryscript-pls takes the file relative from the project baseDir.
                 row("Command Config") {
-                    val commandConfigDescriptor = FileChooserDescriptorFactory.singleFile()
+                    val commandConfigDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
                         .withRoots(project.getBaseDirectories().stream().toList())
                         .withHideIgnored(true)
                         .withShowFileSystemRoots(true)
@@ -101,7 +101,7 @@ class PsConfigurable(
                         val filePath = file.fileSystem.getNioPath(file)?.toAbsolutePath()
                         val path = relativizePath(project, filePath)
                         if (path != null) {
-                            // if the file is in WSL then it might use windows file separators which is a problem
+                            // if the file is in WSL then it might use Windows file separators which is a problem
                             // when the LanguageServer tries to read the file relative to the project root
                             if (WslPath.isWslUncPath(filePath?.toAbsolutePath().toString())) {
                                 return@textFieldWithBrowseButton path.toString().replace("\\", "/")
