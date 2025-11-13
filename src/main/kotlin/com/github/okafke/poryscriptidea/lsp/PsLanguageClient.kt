@@ -8,9 +8,11 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.BaseProjectDirectories.Companion.getBaseDirectories
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isFile
 import com.intellij.openapi.vfs.readBytes
 import com.redhat.devtools.lsp4ij.client.IndexAwareLanguageClient
@@ -50,8 +52,8 @@ class PsLanguageClient(private val project: Project) : IndexAwareLanguageClient(
                     throw IOException("Failed to find file $relativePath in project ${project.name}")
                 }
 
-                val document = FileDocumentManager.getInstance().getDocument(file)
-                return@runReadAction document?.text ?: String(file.readBytes(), StandardCharsets.UTF_8)
+                return@runReadAction getVirtualFileText(file)
+                    ?: String(file.readBytes(), StandardCharsets.UTF_8)
             }
         }
     }
@@ -59,18 +61,26 @@ class PsLanguageClient(private val project: Project) : IndexAwareLanguageClient(
     override fun readfs(file: String): CompletableFuture<String> {
         return CompletableFuture.supplyAsync {
             runReadAction {
+                // pretty ugly solution but somehow this is needed on windows
                 val normalized = if (file.startsWith("file://") && !file.startsWith("file:///")) {
                     file.replaceFirst("file://", "file:///")
                 } else file
 
                 val path = Paths.get(URI.create(normalized))
+
                 val relativePath = relativizePath(project, path)
                 if (relativePath != null) {
-                    val relFile = findRelativeFile(project, relativePath.toString())
+                    var pathString = relativePath.toString().replace('\\', '/')
+                    if (!pathString.startsWith("/")) {
+                        // otherwise findRelativeFile does not seem to work
+                        pathString = "/$pathString"
+                    }
+
+                    val relFile = findRelativeFile(project, pathString)
                     if (relFile != null) {
-                        val document = FileDocumentManager.getInstance().getDocument(relFile)
-                        if (document != null) {
-                            return@runReadAction document.text
+                        val text = getVirtualFileText(relFile)
+                        if (text != null) {
+                            return@runReadAction text
                         }
                     }
                 }
@@ -106,6 +116,20 @@ class PsLanguageClient(private val project: Project) : IndexAwareLanguageClient(
                     ?: throw IOException("Failed to to find relative path $relativePath in project ${project.name}")
             }
         }
+    }
+
+    private fun getVirtualFileText(virtualFile: VirtualFile): String? {
+        val editor = FileEditorManager.getInstance(project).selectedTextEditor
+        if (editor?.virtualFile == virtualFile) {
+            return editor.document.text
+        }
+
+        val document = FileDocumentManager.getInstance().getDocument(virtualFile)
+        if (document != null) {
+            return document.text
+        }
+
+        return null
     }
 
 }
