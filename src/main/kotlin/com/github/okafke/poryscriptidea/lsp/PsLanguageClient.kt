@@ -59,12 +59,16 @@ class PsLanguageClient(private val project: Project) : IndexAwareLanguageClient(
     override fun readfs(file: String): CompletableFuture<String> {
         return CompletableFuture.supplyAsync {
             runReadAction {
-                val path = Paths.get(URI.create(file))
+                val normalized = if (file.startsWith("file://") && !file.startsWith("file:///")) {
+                    file.replaceFirst("file://", "file:///")
+                } else file
+
+                val path = Paths.get(URI.create(normalized))
                 val relativePath = relativizePath(project, path)
                 if (relativePath != null) {
-                    val file = findRelativeFile(project, relativePath.toString())
-                    if (file != null) {
-                        val document = FileDocumentManager.getInstance().getDocument(file)
+                    val relFile = findRelativeFile(project, relativePath.toString())
+                    if (relFile != null) {
+                        val document = FileDocumentManager.getInstance().getDocument(relFile)
                         if (document != null) {
                             return@runReadAction document.text
                         }
