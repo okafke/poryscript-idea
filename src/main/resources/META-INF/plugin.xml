@@ -31,6 +31,9 @@
         <spellchecker.support
                 language="textmate"
                 implementationClass="com.github.okafke.poryscriptidea.lang.PsSpellcheckingStrategy"/>
+        <completion.confidence
+                language="textmate"
+                implementationClass="com.github.okafke.poryscriptidea.lang.PsCompletionConfidence"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
