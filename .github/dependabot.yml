@@ -8,8 +8,26 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    assignees:
+      - "okafke"
+    reviewers:
+      - "okafke"
+    commit-message:
+      prefix: "fix"
+      include: "scope"
+
   # Maintain dependencies for GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "daily"
+    assignees:
+      - "okafke"
+    reviewers:
+      - "okafke"
+    commit-message:
+      prefix: "chore(ci)"
+    groups:
+      actions-deps:
+        patterns:
+          - "*"
