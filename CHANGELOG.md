@@ -9,9 +9,8 @@
 -
 
 ### Dependencies
-- fix(deps): bump org.jetbrains.qodana from 2025.2.2 to 2025.2.3
+- fix(deps): bump LSP4IJ from 0.18.0 to 0.19.0
 - fix(deps): bump org.jetbrains.intellij.platform from 2.10.4 to 2.10.5
-- fix(deps): bump org.jetbrains.changelog from 2.4.0 to 2.5.0
 
 ## [0.3.0] - 2025-11-14
 

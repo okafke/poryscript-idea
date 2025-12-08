@@ -3,6 +3,8 @@ package com.github.okafke.poryscriptidea
 import org.junit.Test
 
 class ChangelogGenerator {
+    // actually org.jetbrains.intellij.platform is also just a gradle plugin, but I think we can keep that
+    private val excludedDependencies = setOf("org.jetbrains.qodana", "org.jetbrains.changelog")
     private val warnings = arrayListOf<String>()
 
     fun printCommits(commits: List<String>) {
@@ -26,7 +28,7 @@ class ChangelogGenerator {
             val match = bumpRegex.find(commit)
             if (match != null) {
                 val dependency = match.groupValues[1]
-                if (considered.add(dependency)) {
+                if (!excludedDependencies.contains(dependency) && considered.add(dependency)) {
                     result.add(commit)
                 }
             } else {
