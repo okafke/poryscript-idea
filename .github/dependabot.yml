@@ -3,7 +3,6 @@
 
 version: 2
 updates:
-  # Maintain dependencies for Gradle dependencies
   - package-ecosystem: "gradle"
     directory: "/"
     schedule:
@@ -15,8 +14,20 @@ updates:
     commit-message:
       prefix: "fix"
       include: "scope"
+    groups:
+      qodana-deps:
+        patterns:
+          - "org.jetbrains.qodana*"
+        commit-message:
+          prefix: "chore"
+          include: "scope"
+      changelog-deps:
+        patterns:
+          - "org.jetbrains.changelog*"
+        commit-message:
+          prefix: "chore"
+          include: "scope"
 
-  # Maintain dependencies for GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
