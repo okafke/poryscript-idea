@@ -3,18 +3,39 @@ package com.github.okafke.poryscriptidea
 import org.junit.Test
 
 class ChangelogGenerator {
+    private val warnings = arrayListOf<String>()
+
     fun printCommits(commits: List<String>) {
         if (commits.isEmpty()) {
             println("-")
         }
 
         for (commit in commits) {
-            // remove (#<pull-req id), e.g. (#33) from the end
-            val cleanedCommit = commit.replace(Regex("""\s+\(#\d+\)"""),"")
+            val cleanedCommit = commit.replace(Regex("""\s+\(#\d+\)"""), "")
             println("- $cleanedCommit")
         }
 
         println()
+    }
+
+    fun filterDependencyBumps(deps: List<String>): List<String> {
+        val bumpRegex = Regex("""fix\(deps\): bump ([\w.\-]+) from ([\w.\-]+) to ([\w.\-]+)""")
+        val considered = mutableSetOf<String>()
+        val result = arrayListOf<String>()
+        deps.forEach { commit ->
+            val match = bumpRegex.find(commit)
+            if (match != null) {
+                val dependency = match.groupValues[1]
+                if (considered.add(dependency)) {
+                    result.add(commit)
+                }
+            } else {
+                warnings.add(commit)
+                result.add(commit)
+            }
+        }
+
+        return result
     }
 
     @Test
@@ -35,7 +56,7 @@ class ChangelogGenerator {
             .readLines()
 
         val feat = arrayListOf<String>()
-        val fix  = arrayListOf<String>()
+        val fix = arrayListOf<String>()
         val deps = arrayListOf<String>()
         for (commit in commits) {
             if (commit.startsWith("fix(deps):")) {
@@ -57,7 +78,12 @@ class ChangelogGenerator {
         printCommits(fix)
 
         println("### Dependencies")
-        printCommits(deps)
+        printCommits(filterDependencyBumps(deps))
+
+        if (warnings.isNotEmpty()) {
+            println("Warnings:")
+            println(warnings.joinToString("\n"))
+        }
     }
 
 }
