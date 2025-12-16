@@ -9,6 +9,17 @@
 -
 
 ### Dependencies
+-
+
+## [0.4.0] - 2025-12-16
+
+### Added
+-
+
+### Fixed
+-
+
+### Dependencies
 - fix(deps): bump org.jetbrains.kotlinx.kover from 0.9.3 to 0.9.4
 - fix(deps): bump LSP4IJ from 0.18.0 to 0.19.0
 
@@ -22,5 +33,6 @@
 - Fixed broken syntax highlighting (#25)
 - Fixed not working on Windows due to File Paths (#24)
 
-[Unreleased]: https://github.com/okafke/poryscript-idea/compare/0.3.0...HEAD
+[Unreleased]: https://github.com/okafke/poryscript-idea/compare/0.4.0...HEAD
+[0.4.0]: https://github.com/okafke/poryscript-idea/compare/0.3.0...0.4.0
 [0.3.0]: https://github.com/okafke/poryscript-idea/compare/0.2.0...0.3.0
