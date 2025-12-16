@@ -9,8 +9,8 @@
 -
 
 ### Dependencies
+- fix(deps): bump org.jetbrains.kotlinx.kover from 0.9.3 to 0.9.4
 - fix(deps): bump LSP4IJ from 0.18.0 to 0.19.0
-- fix(deps): bump org.jetbrains.intellij.platform from 2.10.4 to 2.10.5
 
 ## [0.3.0] - 2025-11-14
 

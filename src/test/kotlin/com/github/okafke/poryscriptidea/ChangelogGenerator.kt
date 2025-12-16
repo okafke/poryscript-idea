@@ -3,8 +3,13 @@ package com.github.okafke.poryscriptidea
 import org.junit.Test
 
 class ChangelogGenerator {
-    // actually org.jetbrains.intellij.platform is also just a gradle plugin, but I think we can keep that
-    private val excludedDependencies = setOf("org.jetbrains.qodana", "org.jetbrains.changelog")
+    // gradle plugins that dependabot marks as fix(deps)
+    private val excludedDependencies = setOf(
+        "org.jetbrains.qodana",
+        "org.jetbrains.changelog",
+        "org.jetbrains.intellij.platform"
+    )
+
     private val warnings = arrayListOf<String>()
 
     fun printCommits(commits: List<String>) {
