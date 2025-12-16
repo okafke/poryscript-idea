@@ -7,7 +7,11 @@ class ChangelogGenerator {
     private val excludedDependencies = setOf(
         "org.jetbrains.qodana",
         "org.jetbrains.changelog",
-        "org.jetbrains.intellij.platform"
+        "org.jetbrains.intellij.platform",
+        "org.jetbrains.kotlin.jvm",
+        "org.jetbrains.kotlinx.kover",
+        "junit",
+        "org.opentest4j"
     )
 
     private val warnings = arrayListOf<String>()
