@@ -9,7 +9,7 @@
 -
 
 ### Dependencies
--
+- fix(deps): Updated to LSP4IJ 0.19.1
 
 ## [0.4.0] - 2025-12-16
 
